@@ -1,11 +1,15 @@
 let express = require('express');
 let router = express.Router();
 
-const publicAddress = "0xEcc179a1b25Dad72D022CD830F9d26221fcA8A81";
+const Web3 = require("web3");
+const network = "https://goerli.infura.io/v3/404b5f580f4a433791e89674f0058e3a";
+const web3 = new Web3(new Web3.providers.HttpProvider(network));
 
-router.get('/', function(req, res) {
+const publicAddress = "0xE7CA92E5e407d61EDf4736Dc6fE68B4F64C74809";
+
+router.get('/', async function(req, res) {
     res.render('index', {
-        balance: getBalance(publicAddress),
+        balance: await getBalance(publicAddress),
         error: req.flash('error'),
         success: req.flash('success'),
         address: publicAddress
@@ -43,8 +47,15 @@ router.post('/', async function (req, res) {
 });
 
 function getBalance(address) {
-    // TODO: Retrieve the real ETH balance for a given address
-    return parseFloat("0").toFixed(8);
+    return new Promise((resolve, reject) => {
+        web3.eth.getBalance(address, (err, result) => {
+            if (err) {
+                return reject(err);
+            }
+            const eth = web3.utils.fromWei(result, "ether");
+            resolve(parseFloat(eth).toFixed(5));
+        }).then();
+    });
 }
 
 function sendEthereum(toAddress, ethAmount) {
